@@ -1,0 +1,23 @@
+{
+  "name": "ogen",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "create-migration": "db-migrate create --migrations-dir migrations/",
+    "migrate": "db-migrate up",
+    "test": "docker-compose run test",
+    "pretest": "docker-compose down"
+  },
+  "devDependencies": {
+    "db-migrate": "^0.11.4",
+    "db-migrate-pg": "^0.4.0",
+    "jest": "^23.6.0",
+    "json-schema-faker": "^0.5.0-rc16"
+  },
+  "dependencies": {
+    "knex": "^0.16.3",
+    "objection": "^1.4.0",
+    "pg": "^7.7.1"
+  }
+}
