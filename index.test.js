@@ -132,18 +132,17 @@ class Role extends Model {
 }
 
 describe('create', async () => {
-  it.only('works for models without any relation', async () => {
-    const { id } = await create(Account)
-    const accounts = await Account.query().where({id})
-    expect(accounts.length).toEqual(1)
-    console.log(accounts)
+  beforeEach(async () => {
+    await knex.raw('TRUNCATE role CASCADE;')
+    await knex.raw('TRUNCATE profile CASCADE;')
+    await knex.raw('TRUNCATE blog CASCADE;')
+    await knex.raw('TRUNCATE account CASCADE;')
+  })
 
-    const roles = await Role.query().where({})
+  it('works for models without any relation', async () => {
+    const { id } = await create(Role)
+    const roles = await Role.query().where({id})
     expect(roles.length).toEqual(1)
-    console.log(roles)
-
-    const rows = await Model.knex().select('*').from('account_role')
-    console.log(rows)
   })
 
   it('works for models with oneToOne relation', async () => {
@@ -169,7 +168,10 @@ describe('create', async () => {
     const accounts = await Account.query().where({id})
     expect(accounts.length).toEqual(1)
 
-    const roles = await Role.query().where({id: blogs[0].account_id})
-    expect(accounts.length).toEqual(1)
+    const roles = await Role.query().where({})
+    expect(roles.length).toEqual(1)
+
+    const relations = await Model.knex().select('*').from('account_role')
+    expect(relations.length).toEqual(1)
   })
 })

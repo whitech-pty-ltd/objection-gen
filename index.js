@@ -28,25 +28,23 @@ async function create(model, overrides = {}, quantity = 1) {
 
       else if(relation === ManyToManyRelation) {
         const thatRow = await create(modelClass)
-        relationMappings[field] = thatRow[toField]
 
-        // const fakes = jsf.generate(model.jsonSchema)
-        // const toInsert = {
-        //   ...fakes,
-        //   ...overrides,
-        //   ...relationMappings
-        // }
-        // const thisRow = await model.query().insert(toInsert)
+        const fakes = jsf.generate(model.jsonSchema)
+        const toInsert = {
+          ...fakes,
+          ...overrides
+        }
+        const thisRow = await model.query().insert(toInsert)
 
-        // const [throughTable, throughFrom] = through.from.split('.')
-        // const throughTo = through.to.split('.')[1]
-        // console.log(throughTable, model.knex(throughTable))
-        // await model.knex(throughTable).insert({
-        //   [throughFrom]: thisRow[fromField],
-        //   [throughTo]: thatRow[toField]
-        // })
+        const [throughTable, throughFrom] = through.from.split('.')
+        const throughTo = through.to.split('.')[1]
+        await model.knex()
+          .raw(`
+            INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
+            VALUES (${thisRow[fromField]}, ${thatRow[toField]});
+          `);
 
-        // return thisRow
+        return thisRow
       }
     }
   }
@@ -57,8 +55,6 @@ async function create(model, overrides = {}, quantity = 1) {
     ...overrides,
     ...relationMappings
   }
-  console.log(relationMappings)
-  console.log(toInsert)
   return model.query().insert(toInsert)
 }
 

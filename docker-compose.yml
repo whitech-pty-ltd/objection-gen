@@ -11,4 +11,4 @@ services:
       - psql
     environment:
       - DATABASE_URL=postgres://postgres@psql:5432/postgres
-    command: /bin/sh -c "yarn && sleep 10 && yarn migrate && ./node_modules/jest-cli/bin/jest.js"
+    command: /bin/sh -c "yarn && sleep 10 && yarn migrate && ./node_modules/jest-cli/bin/jest.js --forceExit"
