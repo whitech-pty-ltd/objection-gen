@@ -1,7 +1,9 @@
 const { Model } = require('objection')
 const Knex = require('knex')
 const jsf = require('json-schema-faker')
-const { create } = require('./index')
+const { generator } = require('./index')
+
+const { create, clean } = generator()
 
 // Initialize knex.
 const knex = Knex({
@@ -133,10 +135,7 @@ class Role extends Model {
 
 describe('create', async () => {
   beforeEach(async () => {
-    await knex.raw('TRUNCATE role CASCADE;')
-    await knex.raw('TRUNCATE profile CASCADE;')
-    await knex.raw('TRUNCATE blog CASCADE;')
-    await knex.raw('TRUNCATE account CASCADE;')
+    await clean()
   })
 
   it('works for models without any relation', async () => {
