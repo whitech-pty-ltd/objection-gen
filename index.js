@@ -44,12 +44,12 @@ function generator() {
             const toField = to.split('.')[1]
             const fromField = from.split('.')[1]
 
-            if([BelongsToOneRelation, HasManyRelation].includes(relation)) {
+            if([BelongsToOneRelation.name, HasManyRelation.name].includes(relation.name)) {
               const row = await create(modelClass)
               relationMappings[fromField] = row[toField]
             }
 
-            else if(relation === ManyToManyRelation) {
+            else if(relation.name === ManyToManyRelation.name) {
               const thatRow = await create(modelClass)
 
               const fakes = jsf.generate(model.jsonSchema)
