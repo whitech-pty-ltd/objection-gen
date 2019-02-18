@@ -13,17 +13,17 @@ function generator() {
     for(let i = 0; i < dirtyModels.length; i++) {
       const model = dirtyModels[i]
       const knex = model.knex()
-      const client = knex.client.database()
-      if(client === 'postgres') {
+      const host = knex.client.config.connection.host
+      if(host === 'psql') {
         await knex.raw(`TRUNCATE ${model.tableName} CASCADE;`)
       }
-      else if(client === 'mysql') {
+      else if(host === 'mysql') {
         await knex.raw('SET FOREIGN_KEY_CHECKS = 0;');
         await knex.raw(`TRUNCATE ${model.tableName};`);
         await knex.raw('SET FOREIGN_KEY_CHECKS = 1;');
       }
       else {
-        throw Error('Unhandled client')
+        throw Error('Unhandled host')
       }
     }
   }
