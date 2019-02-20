@@ -28,12 +28,12 @@ function generator() {
     }
   }
 
-  async function create (model, overrides = {}, quantity = 1) {
+  async function create (model, overrides = {}, {followRelations = true, quantity = 1} = {}) {
         const relations = model.relationMappings
         const relationMappings = {}
         dirtyModels.push(model)
 
-        if(relations) {
+        if(followRelations && relations) {
           for (let field in relations) {
             if(overrides[field]) continue
             const {

@@ -173,4 +173,14 @@ describe('create', async () => {
     const relations = await Model.knex().select('*').from('account_role')
     expect(relations.length).toEqual(1)
   })
+
+  it("respects 'followRelations' option", async () => {
+    try {
+      await create(Profile, {}, {followRelations: false})
+      expect.fail('It should not have created the related models.')
+    }
+    catch(e) {
+      expect(e.message.includes('violates foreign key constraint')).toEqual(true)
+    }
+  })
 })
