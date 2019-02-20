@@ -153,8 +153,28 @@ describe('create', async () => {
     expect(accounts.length).toEqual(1)
   })
 
+  it('wont create related model if it is being supplied by a user(BelongsToOneRelation)', async () => {
+    const acc = await create(Account)
+    const { id } = await create(Profile, { account: acc })
+    const profiles = await Profile.query().where({id})
+    expect(profiles.length).toEqual(1)
+
+    const accounts = await Account.query().where({id: profiles[0].account_id})
+    expect(accounts.length).toEqual(1)
+  })
+
   it('works for models with foreign key', async () => {
     const { id } = await create(Blog)
+    const blogs = await Blog.query().where({id})
+    expect(blogs.length).toEqual(1)
+
+    const accounts = await Account.query().where({id: blogs[0].account_id})
+    expect(accounts.length).toEqual(1)
+  })
+
+  it('wont create related model if it is being supplied by a user(HasManyRelation)', async () => {
+    const acc = await create(Account)
+    const { id } = await create(Blog, { account: acc })
     const blogs = await Blog.query().where({id})
     expect(blogs.length).toEqual(1)
 
@@ -172,6 +192,19 @@ describe('create', async () => {
 
     const relations = await Model.knex().select('*').from('account_role')
     expect(relations.length).toEqual(1)
+  })
+
+  it('wont create related models if it is being supplied by a user(ManyToManyRelation)', async () => {
+    const roles = [ await create(Role) ]
+    const { id } = await create(Account, {roles})
+    const accounts = await Account.query().where({id})
+    expect(accounts.length).toEqual(1)
+
+    const relations = await Model.knex().select('*').from('account_role')
+    expect(relations.length).toEqual(1)
+
+    const r = await Role.query().where({})
+    expect(r.length).toEqual(1)
   })
 
   it("respects 'followRelations' option", async () => {

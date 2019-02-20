@@ -35,7 +35,6 @@ function generator() {
 
         if(followRelations && relations) {
           for (let field in relations) {
-            if(overrides[field]) continue
             const {
               relation,
               modelClass,
@@ -45,12 +44,25 @@ function generator() {
             const fromField = from.split('.')[1]
 
             if([BelongsToOneRelation.name, HasManyRelation.name].includes(relation.name)) {
-              const row = await create(modelClass)
-              relationMappings[fromField] = row[toField]
+              if(overrides[field]) {
+                relationMappings[fromField] = overrides[field][toField]
+              }
+              else {
+                const row = await create(modelClass)
+                relationMappings[field] = row
+                relationMappings[fromField] = row[toField]
+              }
             }
-
             else if(relation.name === ManyToManyRelation.name) {
-              const thatRow = await create(modelClass)
+              let relatedInstances = overrides[field]
+
+              if(relatedInstances && !Array.isArray(relatedInstances)) {
+                throw new Error(`Please pass an array of instance for field '${field}'.`)
+              }
+
+              if(!relatedInstances || relatedInstances.length === 0) {
+                relatedInstances = [await create(modelClass)]
+              }
 
               const fakes = jsf.generate(model.jsonSchema)
               const toInsert = {
@@ -61,11 +73,16 @@ function generator() {
 
               const [throughTable, throughFrom] = through.from.split('.')
               const throughTo = through.to.split('.')[1]
-              await model.knex()
-                .raw(`
-                  INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
-                  VALUES (${thisRow[fromField]}, ${thatRow[toField]});
-                `);
+
+              for(let i = 0; i < relatedInstances.length; i++) {
+                await model.knex()
+                  .raw(`
+                    INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
+                    VALUES (${thisRow[fromField]}, ${relatedInstances[i][toField]});
+                  `);
+              }
+
+              thisRow[field] = relatedInstances
 
               return thisRow
             }
