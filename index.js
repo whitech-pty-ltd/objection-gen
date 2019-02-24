@@ -1,7 +1,7 @@
 const jsf = require('json-schema-faker')
 const { Model } = require('objection')
 const {
-  BelongsToOneRelation,
+  HasOneRelation,
   HasManyRelation,
   ManyToManyRelation
 } = Model
@@ -43,7 +43,7 @@ function generator() {
             const toField = to.split('.')[1]
             const fromField = from.split('.')[1]
 
-            if([BelongsToOneRelation.name, HasManyRelation.name].includes(relation.name)) {
+            if([HasOneRelation.name, HasManyRelation.name].includes(relation.name)) {
               if(overrides[field]) {
                 relationMappings[fromField] = overrides[field][toField]
               }

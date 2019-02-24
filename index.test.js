@@ -73,7 +73,7 @@ class Profile extends Model {
   static get relationMappings() {
     return {
       account: {
-        relation: Model.BelongsToOneRelation,
+        relation: Model.HasOneRelation,
         modelClass: Account,
         join: {
           from: 'profile.account_id',
@@ -153,7 +153,7 @@ describe('create', async () => {
     expect(accounts.length).toEqual(1)
   })
 
-  it('wont create related model if it is being supplied by a user(BelongsToOneRelation)', async () => {
+  it('wont create related model if it is being supplied by a user(HasOneRelation)', async () => {
     const acc = await create(Account)
     const { id } = await create(Profile, { account: acc })
     const profiles = await Profile.query().where({id})
