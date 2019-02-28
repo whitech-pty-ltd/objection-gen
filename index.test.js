@@ -3,7 +3,7 @@ const Knex = require('knex')
 const jsf = require('json-schema-faker')
 const { generator } = require('./index')
 
-const { create, clean } = generator()
+const { create, clean, prepare } = generator()
 
 // Initialize knex.
 const knex = Knex({

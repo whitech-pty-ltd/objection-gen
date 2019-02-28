@@ -35,78 +35,85 @@ function generator() {
   }
 
   async function create (model, overrides = {}, {followRelations = true, quantity = 1} = {}) {
-        const relations = model.relationMappings
-        const relationMappings = {}
-        addDirtyModel(model)
+    const relations = model.relationMappings
+    const relationMappings = {}
+    addDirtyModel(model)
 
-        if(followRelations && relations) {
-          for (let field in relations) {
-            const {
-              relation,
-              modelClass,
-              join: {to, from, through},
-            } = relations[field]
-            const toField = to.split('.')[1]
-            const fromField = from.split('.')[1]
+    if(followRelations && relations) {
+      for (let field in relations) {
+        const {
+          relation,
+          modelClass,
+          join: {to, from, through},
+        } = relations[field]
+        const toField = to.split('.')[1]
+        const fromField = from.split('.')[1]
 
-            if([HasOneRelation.name, HasManyRelation.name].includes(relation.name)) {
-              if(overrides[field]) {
-                relationMappings[fromField] = overrides[field][toField]
-              }
-              else {
-                const row = await create(modelClass)
-                relationMappings[field] = row
-                relationMappings[fromField] = row[toField]
-              }
-            }
-            else if(relation.name === ManyToManyRelation.name) {
-              let relatedInstances = overrides[field]
-
-              if(relatedInstances && !Array.isArray(relatedInstances)) {
-                throw new Error(`Please pass an array of instance for field '${field}'.`)
-              }
-
-              if(!relatedInstances || relatedInstances.length === 0) {
-                relatedInstances = [await create(modelClass)]
-              }
-
-              const fakes = jsf.generate(model.jsonSchema)
-              const toInsert = {
-                ...fakes,
-                ...overrides
-              }
-              const thisRow = await model.query().insert(toInsert)
-
-              const [throughTable, throughFrom] = through.from.split('.')
-              const throughTo = through.to.split('.')[1]
-
-              for(let i = 0; i < relatedInstances.length; i++) {
-                await model.knex()
-                  .raw(`
-                    INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
-                    VALUES (${thisRow[fromField]}, ${relatedInstances[i][toField]});
-                  `);
-              }
-
-              thisRow[field] = relatedInstances
-
-              return thisRow
-            }
+        if([HasOneRelation.name, HasManyRelation.name].includes(relation.name)) {
+          if(overrides[field]) {
+            relationMappings[fromField] = overrides[field][toField]
+          }
+          else {
+            const row = await create(modelClass)
+            relationMappings[field] = row
+            relationMappings[fromField] = row[toField]
           }
         }
+        else if(relation.name === ManyToManyRelation.name) {
+          let relatedInstances = overrides[field]
 
-        const fakes = jsf.generate(model.jsonSchema)
-        const toInsert = {
-          ...fakes,
-          ...overrides,
-          ...relationMappings
+          if(relatedInstances && !Array.isArray(relatedInstances)) {
+            throw new Error(`Please pass an array of instance for field '${field}'.`)
+          }
+
+          if(!relatedInstances || relatedInstances.length === 0) {
+            relatedInstances = [await create(modelClass)]
+          }
+
+          const fakes = jsf.generate(model.jsonSchema)
+          const toInsert = {
+            ...fakes,
+            ...overrides
+          }
+          const thisRow = await model.query().insert(toInsert)
+
+          const [throughTable, throughFrom] = through.from.split('.')
+          const throughTo = through.to.split('.')[1]
+
+          for(let i = 0; i < relatedInstances.length; i++) {
+            await model.knex()
+              .raw(`
+                INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
+                VALUES (${thisRow[fromField]}, ${relatedInstances[i][toField]});
+              `);
+          }
+
+          thisRow[field] = relatedInstances
+
+          return thisRow
         }
-        return model.query().insert(toInsert)
       }
+    }
+
+    const fakes = jsf.generate(model.jsonSchema)
+    const toInsert = {
+      ...fakes,
+      ...overrides,
+      ...relationMappings
+    }
+    return model.query().insert(toInsert)
+  }
+
+  function prepare(model, overrides) {
+    const fakes = jsf.generate(model.jsonSchema)
+    return { ...fakes, ...overrides }
+  }
 
   return {
     clean,
-    create
+    create,
+    addDirtyModel,
+    prepare
   }
 }
 
