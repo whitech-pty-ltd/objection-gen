@@ -28,10 +28,16 @@ function generator() {
     }
   }
 
+  function addDirtyModel(model) {
+    if(dirtyModels.indexOf(model) === -1) {
+      dirtyModels.push(model)
+    }
+  }
+
   async function create (model, overrides = {}, {followRelations = true, quantity = 1} = {}) {
         const relations = model.relationMappings
         const relationMappings = {}
-        dirtyModels.push(model)
+        addDirtyModel(model)
 
         if(followRelations && relations) {
           for (let field in relations) {
