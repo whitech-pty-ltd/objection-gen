@@ -5,6 +5,7 @@ const {
   HasManyRelation,
   ManyToManyRelation
 } = Model
+const toCamelCase = require('lodash.camelcase')
 
 const dirtyModels = []
 
@@ -55,7 +56,8 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
         else {
           const row = await create(modelClass)
           relationMappings[field] = row
-          relationMappings[fromField] = row[toField]
+          // there is a chance that a user converts the case of columns back and forth
+          relationMappings[fromField] = row[toField] || row[camelcase(toField)]
         }
       }
       else if(relation.name === ManyToManyRelation.name) {
@@ -80,10 +82,13 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
         const throughTo = through.to.split('.')[1]
 
         for(let i = 0; i < relatedInstances.length; i++) {
+          // there is a chance that a user converts the case of columns back and forth
+          const fromValue = thisRow[fromField] || thisRow[toCamelCase(fromField)]
+          const toValue = relatedInstances[i][toField] || relatedInstances[i][toCamelCase(toField)]
           await model.knex()
             .raw(`
               INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
-              VALUES (${thisRow[fromField]}, ${relatedInstances[i][toField]});
+              VALUES (${fromValue}, ${toValue});
             `);
         }
 
@@ -112,5 +117,6 @@ module.exports = {
   clean,
   create,
   addDirtyModel,
-  prepare
+  prepare,
+  jsf
 }
