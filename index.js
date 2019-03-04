@@ -1,8 +1,7 @@
 const jsf = require('json-schema-faker')
 const { Model } = require('objection')
 const {
-  HasOneRelation,
-  HasManyRelation,
+  BelongsToOneRelation,
   ManyToManyRelation
 } = Model
 const toCamelCase = require('lodash.camelcase')
@@ -49,7 +48,7 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
       const toField = to.split('.')[1]
       const fromField = from.split('.')[1]
 
-      if([HasOneRelation.name, HasManyRelation.name].includes(relation.name)) {
+      if([BelongsToOneRelation.name].includes(relation.name)) {
         if(overrides[field]) {
           relationMappings[fromField] = overrides[field][toField]
         }

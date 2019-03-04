@@ -70,7 +70,7 @@ class Profile extends Model {
   static get relationMappings() {
     return {
       account: {
-        relation: Model.HasOneRelation,
+        relation: Model.BelongsToOneRelation,
         modelClass: Account,
         join: {
           from: 'profile.account_id',
@@ -102,7 +102,7 @@ class Blog extends Model {
   static get relationMappings() {
     return {
       account: {
-        relation: Model.HasManyRelation,
+        relation: Model.BelongsToOneRelation,
         modelClass: Account,
         join: {
           from: 'blog.account_id',
@@ -150,16 +150,6 @@ describe('create', async () => {
     expect(accounts.length).toEqual(1)
   })
 
-  it('wont create related model if it is being supplied by a user(HasOneRelation)', async () => {
-    const acc = await create(Account)
-    const { id } = await create(Profile, { account: acc })
-    const profiles = await Profile.query().where({id})
-    expect(profiles.length).toEqual(1)
-
-    const accounts = await Account.query().where({id: profiles[0].account_id})
-    expect(accounts.length).toEqual(1)
-  })
-
   it('works for models with foreign key', async () => {
     const { id } = await create(Blog)
     const blogs = await Blog.query().where({id})
@@ -169,7 +159,7 @@ describe('create', async () => {
     expect(accounts.length).toEqual(1)
   })
 
-  it('wont create related model if it is being supplied by a user(HasManyRelation)', async () => {
+  it('wont create related model if it is being supplied by a user(BelongsToOneRelation)', async () => {
     const acc = await create(Account)
     const { id } = await create(Blog, { account: acc })
     const blogs = await Blog.query().where({id})

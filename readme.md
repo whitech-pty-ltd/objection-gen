@@ -69,7 +69,7 @@ class Blog extends Model {
   static get relationMappings() {
     return {
       account: {
-        relation: Model.HasManyRelation,
+        relation: Model.BelongsToOneRelation,
         modelClass: Account,
         join: {
           from: 'blog.account_id',
