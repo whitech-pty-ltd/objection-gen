@@ -1,9 +1,6 @@
 const { Model } = require('objection')
 const Knex = require('knex')
-const jsf = require('json-schema-faker')
-const { generator } = require('./index')
-
-const { create, clean, prepare } = generator()
+const { create, clean } = require('./index')
 
 // Initialize knex.
 const knex = Knex({
