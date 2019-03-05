@@ -51,6 +51,7 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
       if([BelongsToOneRelation.name].includes(relation.name)) {
         if(overrides[field]) {
           relationMappings[fromField] = overrides[field][toField]
+          relationMappings[toCamelCase(fromField)] = relationMappings[fromField]
         }
         else {
           const row = await create(modelClass)
