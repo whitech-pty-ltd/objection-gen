@@ -57,6 +57,7 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
           relationMappings[field] = row
           // there is a chance that a user converts the case of columns back and forth
           relationMappings[fromField] = row[toField] || row[toCamelCase(toField)]
+          relationMappings[toCamelCase(fromField)] = relationMappings[fromField]
         }
       }
       else if(relation.name === ManyToManyRelation.name) {
