@@ -8,6 +8,10 @@ const toCamelCase = require('lodash.camelcase')
 
 const dirtyModels = []
 
+function isCamelCase(key) {
+  return /[A-Z]/.test(key)
+}
+
 async function clean() {
   for(let i = 0; i < dirtyModels.length; i++) {
     const model = dirtyModels[i]
@@ -33,7 +37,15 @@ function addDirtyModel(model) {
   }
 }
 
+function getKey(obj, key) {
+  return obj[key] !== undefined? key: toCamelCase(key)
+}
+
 async function create (model, overrides = {}, {followRelations = true, quantity = 1} = {}) {
+  if(model && !model.jsonSchema) {
+    throw new Error(`Please add 'jsonSchema' to the model '${model.name}'.`)
+  }
+
   const relations = model.relationMappings
   const relationMappings = {}
   addDirtyModel(model)
@@ -50,15 +62,12 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
 
       if([BelongsToOneRelation.name].includes(relation.name)) {
         if(overrides[field]) {
-          relationMappings[fromField] = overrides[field][toField]
-          relationMappings[toCamelCase(fromField)] = relationMappings[fromField]
+          relationMappings[getKey(model.jsonSchema.properties, fromField)] = overrides[field][toField]
         }
         else {
           const row = await create(modelClass)
           relationMappings[field] = row
-          // there is a chance that a user converts the case of columns back and forth
-          relationMappings[fromField] = row[toField] || row[toCamelCase(toField)]
-          relationMappings[toCamelCase(fromField)] = relationMappings[fromField]
+          relationMappings[getKey(model.jsonSchema.properties, fromField)] = row[getKey(row, toField)]
         }
       }
       else if(relation.name === ManyToManyRelation.name) {
@@ -83,9 +92,8 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
         const throughTo = through.to.split('.')[1]
 
         for(let i = 0; i < relatedInstances.length; i++) {
-          // there is a chance that a user converts the case of columns back and forth
-          const fromValue = thisRow[fromField] || thisRow[toCamelCase(fromField)]
-          const toValue = relatedInstances[i][toField] || relatedInstances[i][toCamelCase(toField)]
+          const fromValue = thisRow[getKey(thisRow, fromField)]
+          const toValue = relatedInstances[i][getKey(relatedInstances[i], toField)]
           await model.knex()
             .raw(`
               INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
@@ -119,5 +127,6 @@ module.exports = {
   create,
   addDirtyModel,
   prepare,
-  jsf
+  jsf,
+  isCamelCase
 }

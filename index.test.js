@@ -1,6 +1,6 @@
 const { Model } = require('objection')
 const Knex = require('knex')
-const { create, clean } = require('./index')
+const { create, clean, isCamelCase } = require('./index')
 
 // Initialize knex.
 const knex = Knex({
@@ -59,9 +59,11 @@ class Profile extends Model {
   static get jsonSchema() {
     return {
       type: 'object',
+      required: [ 'address', 'account_id' ],
       properties: {
         id: {type: 'integer', minimum: 1},
-        address: {type: 'string'}
+        address: {type: 'string'},
+        account_id: {type: 'integer', minimum: 1}
       },
       required: ['id', 'address']
     }
@@ -130,6 +132,8 @@ class Role extends Model {
   }
 }
 
+class Noop extends Model {}
+
 describe('create', async () => {
   beforeEach(async () => {
     await clean()
@@ -159,7 +163,7 @@ describe('create', async () => {
     expect(accounts.length).toEqual(1)
   })
 
-  it('wont create related model if it is being supplied by a user(BelongsToOneRelation)', async () => {
+  it('wont create related model if the model is supplied - BelongsToOneRelation', async () => {
     const acc = await create(Account)
     const { id } = await create(Blog, { account: acc })
     const blogs = await Blog.query().where({id})
@@ -181,7 +185,7 @@ describe('create', async () => {
     expect(relations.length).toEqual(1)
   })
 
-  it('wont create related models if it is being supplied by a user(ManyToManyRelation)', async () => {
+  it('wont create related models if the model is supplied - ManyToManyRelation', async () => {
     const roles = [ await create(Role) ]
     const { id } = await create(Account, {roles})
     const accounts = await Account.query().where({id})
@@ -202,5 +206,24 @@ describe('create', async () => {
     catch(e) {
       expect(e.message.includes('violates foreign key constraint')).toEqual(true)
     }
+  })
+
+  it("throws if a model does not have property named 'jsonSchema'", async () => {
+    try {
+      await create(Noop)
+      expect.fail('It should have failed.')
+    }
+    catch(e) {
+      expect(e.message).toEqual(`Please add 'jsonSchema' to the model '${Noop.name}'.`)
+    }
+  })
+})
+
+
+describe('isCamelCase', () => {
+  it('works', () => {
+    expect(isCamelCase('helloWorld')).toEqual(true)
+    expect(isCamelCase('hello_world')).toEqual(false)
+    expect(isCamelCase('hello')).toEqual(false)
   })
 })

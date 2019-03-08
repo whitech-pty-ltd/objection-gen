@@ -1,8 +1,10 @@
 ## Introduction
 
-`objection-gen` generates random data for a model and other related models.
-It uses a model's `jsonSchema` to generate random data. Internally it uses
-[json-schema-faker](https://github.com/json-schema-faker/json-schema-faker) for this.
+`objection-gen` generates random data for [Objection.js](https://github.com/Vincit/objection.js/)'s model and other related models.
+It uses a model's `jsonSchema` and `relationMappings`to generate random
+data and follow the relations respectively. Internally it uses
+[json-schema-faker](https://github.com/json-schema-faker/json-schema-faker)
+for generating fake data.
 
 ## Installation
 Using npm
@@ -19,73 +21,10 @@ yarn add objection-gen
 - psql
 - mysql
 
-## Walk through
-
-For walk though lets consider following models:
-- `Profile` has one to one relation with `Account`
-- `Account` has one to many relation with `Blog`
-
-```javascript
-import { create, prepare, clean }  from 'objection-gen'
-
-class Account extends Model {
-  static get tableName() {
-    return 'account'
-  }
-
-  static get jsonSchema() {
-    return {
-      type: 'object',
-      properties: {
-        id: {type: 'integer', minimum: 1},
-        username: {type: 'string'},
-        email: {type: 'string'},
-        password: {type: 'string'},
-        full_name: {type: 'string'}
-      },
-      required: ['id', 'username', 'email', 'password', 'full_name']
-    }
-  }
-}
-
-class Blog extends Model {
-  static get tableName() {
-    return 'blog'
-  }
-
-  static get jsonSchema() {
-    return {
-      type: 'object',
-      properties: {
-        id: {type: 'integer', minimum: 1},
-        title: {type: 'string'},
-        body: {type: 'string'},
-        account_id: {type: 'integer', minimum: 1}
-      },
-      required: ['id', 'title', 'body', 'account_id']
-    }
-  }
-
-  static get relationMappings() {
-    return {
-      account: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: Account,
-        join: {
-          from: 'blog.account_id',
-          to: 'account.id'
-        }
-      }
-    }
-  }
-}
-
-// The statement below generates random data for `Blog` as well as `Account` and inserts them to the db.
-create(Blog)
-
-clean() // truncates both Blog and Account tables
-
-```
+## Walkthrough
+The best Walkthough is the tests in the repo.
+Checkout the [tests](https://github.com/ludbek/objection-gen/blob/master/index.test.js)
+to learn how it can be used.
 
 ## API
 ### 1. create(model: ObjectionModel, overrides: object, options: object)
