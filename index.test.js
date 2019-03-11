@@ -1,6 +1,6 @@
 const { Model } = require('objection')
 const Knex = require('knex')
-const { create, clean, isCamelCase } = require('./index')
+const { create, clean } = require('./index')
 
 // Initialize knex.
 const knex = Knex({
@@ -216,14 +216,5 @@ describe('create', async () => {
     catch(e) {
       expect(e.message).toEqual(`Please add 'jsonSchema' to the model '${Noop.name}'.`)
     }
-  })
-})
-
-
-describe('isCamelCase', () => {
-  it('works', () => {
-    expect(isCamelCase('helloWorld')).toEqual(true)
-    expect(isCamelCase('hello_world')).toEqual(false)
-    expect(isCamelCase('hello')).toEqual(false)
   })
 })

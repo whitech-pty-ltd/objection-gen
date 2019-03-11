@@ -8,10 +8,6 @@ const toCamelCase = require('lodash.camelcase')
 
 const dirtyModels = []
 
-function isCamelCase(key) {
-  return /[A-Z]/.test(key)
-}
-
 async function clean() {
   for(let i = 0; i < dirtyModels.length; i++) {
     const model = dirtyModels[i]
@@ -62,7 +58,7 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
 
       if([BelongsToOneRelation.name].includes(relation.name)) {
         if(overrides[field]) {
-          relationMappings[getKey(model.jsonSchema.properties, fromField)] = overrides[field][toField]
+          relationMappings[getKey(model.jsonSchema.properties, fromField)] = overrides[field][getKey(overrides[field], toField)]
         }
         else {
           const row = await create(modelClass)
@@ -127,6 +123,5 @@ module.exports = {
   create,
   addDirtyModel,
   prepare,
-  jsf,
-  isCamelCase
+  jsf
 }
