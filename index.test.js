@@ -173,19 +173,7 @@ describe('create', async () => {
     expect(accounts.length).toEqual(1)
   })
 
-  it('works for models with many to many relation', async () => {
-    const { id } = await create(Account)
-    const accounts = await Account.query().where({id})
-    expect(accounts.length).toEqual(1)
-
-    const roles = await Role.query().where({})
-    expect(roles.length).toEqual(1)
-
-    const relations = await Model.knex().select('*').from('account_role')
-    expect(relations.length).toEqual(1)
-  })
-
-  it('wont create related models if the model is supplied - ManyToManyRelation', async () => {
+  it('links user supplied models - ManyToManyRelation', async () => {
     const roles = [ await create(Role) ]
     const { id } = await create(Account, {roles})
     const accounts = await Account.query().where({id})
@@ -193,6 +181,8 @@ describe('create', async () => {
 
     const relations = await Model.knex().select('*').from('account_role')
     expect(relations.length).toEqual(1)
+    expect(parseInt(relations[0].account_id)).toEqual(id)
+    expect(parseInt(relations[0].role_id)).toEqual(roles[0].id)
 
     const r = await Role.query().where({})
     expect(r.length).toEqual(1)

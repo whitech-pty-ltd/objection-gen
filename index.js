@@ -68,13 +68,10 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
       }
       else if(relation.name === ManyToManyRelation.name) {
         let relatedInstances = overrides[field]
+        if(!relatedInstances) continue
 
-        if(relatedInstances && !Array.isArray(relatedInstances)) {
+        if(relatedInstances && !Array.isArray(relatedInstances) || relatedInstances.length === 0) {
           throw new Error(`Please pass an array of instance for field '${field}'.`)
-        }
-
-        if(!relatedInstances || relatedInstances.length === 0) {
-          relatedInstances = [await create(modelClass)]
         }
 
         const fakes = jsf.generate(model.jsonSchema)
