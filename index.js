@@ -46,6 +46,8 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
   const relationMappings = {}
   addDirtyModel(model)
 
+  const manyToManyRelations = []
+
   if(followRelations && relations) {
     for (let field in relations) {
       const {
@@ -74,29 +76,8 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
           throw new Error(`Please pass an array of instance for field '${field}'.`)
         }
 
-        const fakes = jsf.generate(model.jsonSchema)
-        const toInsert = {
-          ...fakes,
-          ...overrides
-        }
-        const thisRow = await model.query().insert(toInsert)
+        manyToManyRelations.push([field, through, relatedInstances, toField, fromField])
 
-        const [throughTable, throughFrom] = through.from.split('.')
-        const throughTo = through.to.split('.')[1]
-
-        for(let i = 0; i < relatedInstances.length; i++) {
-          const fromValue = thisRow[getKey(thisRow, fromField)]
-          const toValue = relatedInstances[i][getKey(relatedInstances[i], toField)]
-          await model.knex()
-            .raw(`
-              INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
-              VALUES (${fromValue}, ${toValue});
-            `);
-        }
-
-        thisRow[field] = relatedInstances
-
-        return thisRow
       }
     }
   }
@@ -107,7 +88,30 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
     ...overrides,
     ...relationMappings
   }
-  return model.query().insert(toInsert)
+  const instance = await model.query().insert(toInsert)
+  return await linkManyToManyRelations(instance, manyToManyRelations, model)
+}
+
+async function linkManyToManyRelations(instance, manyToManyRelations, model) {
+  for(let i = 0; i < manyToManyRelations.length; i ++ ) {
+    const [ field, through, relatedInstances, toField, fromField ] = manyToManyRelations[i]
+
+    const [throughTable, throughFrom] = through.from.split('.')
+    const throughTo = through.to.split('.')[1]
+
+    for(let i = 0; i < relatedInstances.length; i++) {
+      const fromValue = instance[getKey(instance, fromField)]
+      const toValue = relatedInstances[i][getKey(relatedInstances[i], toField)]
+      await model.knex()
+        .raw(`
+          INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
+          VALUES (${fromValue}, ${toValue});
+        `);
+    }
+
+    instance[field] = relatedInstances
+  }
+  return instance
 }
 
 function prepare(model, overrides) {
