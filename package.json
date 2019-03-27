@@ -21,4 +21,22 @@
     "json-schema-faker": "^0.5.0-rc16",
     "lodash.camelcase": "^4.3.0"
   }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whitech-pty-ltd/objection-gen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/whitech-pty-ltd/objection-gen/issues"
+  },
+  "homepage": "https://github.com/whitech-pty-ltd/objection-gen#readme",
+  "keywords": [
+    "schema",
+    "json",
+    "objection.js",
+    "objection",
+    "model",
+    "fixture",
+    "test",
+    "auto-generate"
+  ]
 }
