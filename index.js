@@ -88,7 +88,7 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
     ...overrides,
     ...relationMappings
   }
-  const instance = await model.query().insert(toInsert)
+  const instance = await model.query().insertAndFetch(toInsert)
   return await linkManyToManyRelations(instance, manyToManyRelations, model)
 }
 

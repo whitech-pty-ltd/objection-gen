@@ -63,7 +63,7 @@ class Profile extends Model {
       properties: {
         id: {type: 'integer', minimum: 1},
         address: {type: 'string'},
-        account_id: {type: 'integer', minimum: 1}
+        account_id: {type: 'string'}
       },
       required: ['id', 'address']
     }
@@ -95,7 +95,7 @@ class Blog extends Model {
         id: {type: 'integer', minimum: 1},
         title: {type: 'string'},
         body: {type: 'string'},
-        account_id: {type: 'integer', minimum: 1}
+        account_id: {type: 'string'}
       },
       required: ['id', 'title', 'body', 'account_id']
     }
@@ -181,8 +181,8 @@ describe('create', async () => {
 
     const relations = await Model.knex().select('*').from('account_role')
     expect(relations.length).toEqual(1)
-    expect(parseInt(relations[0].account_id)).toEqual(id)
-    expect(parseInt(relations[0].role_id)).toEqual(roles[0].id)
+    expect(relations[0].account_id).toEqual(id)
+    expect(relations[0].role_id).toEqual(roles[0].id)
 
     const r = await Role.query().where({})
     expect(r.length).toEqual(1)
