@@ -173,6 +173,16 @@ describe('create', async () => {
     expect(accounts.length).toEqual(1)
   })
 
+  it("wont create related model if foreign key is supplied", async () => {
+    const acc = await create(Account)
+    const { id } = await create(Blog, { account_id: acc.id })
+    const blogs = await Blog.query().where({id})
+    expect(blogs.length).toEqual(1)
+
+    const accounts = await Account.query().where({id: blogs[0].account_id})
+    expect(accounts.length).toEqual(1)
+  })
+
   it('links user supplied models - ManyToManyRelation', async () => {
     const roles = [ await create(Role) ]
     const { id } = await create(Account, {roles})

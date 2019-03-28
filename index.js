@@ -60,14 +60,18 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
       const toField = to.split('.')[1]
       const fromField = from.split('.')[1]
 
-      if([BelongsToOneRelation.name].includes(relation.name)) {
+
+      if(BelongsToOneRelation.name === relation.name) {
         if(overrides[field]) {
           relationMappings[getKey(model.jsonSchema.properties, fromField)] = overrides[field][getKey(overrides[field], toField)]
         }
         else {
-          const row = await create(modelClass)
-          relationMappings[field] = row
-          relationMappings[getKey(model.jsonSchema.properties, fromField)] = row[getKey(row, toField)]
+          const fromFieldValue = overrides[getKey(model.jsonSchema.properties, fromField)]
+          if(!fromFieldValue) {
+            const row = await create(modelClass)
+            relationMappings[field] = row
+            relationMappings[getKey(model.jsonSchema.properties, fromField)] = row[getKey(row, toField)]
+          }
         }
       }
       else if(relation.name === ManyToManyRelation.name) {
