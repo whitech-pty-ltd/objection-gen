@@ -24,6 +24,8 @@ async function clean() {
     else {
       throw Error('Unhandled host')
     }
+
+    dirtyModels.shift()
   }
 }
 
