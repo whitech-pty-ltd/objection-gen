@@ -1,24 +1,28 @@
 const jsf = require('json-schema-faker')
 const { Model } = require('objection')
+const toCamelCase = require('lodash.camelcase')
+
 const {
   BelongsToOneRelation,
   ManyToManyRelation
 } = Model
-const toCamelCase = require('lodash.camelcase')
-
 const dirtyModels = []
 
 async function clean() {
-  for(let i = 0; i < dirtyModels.length; i++) {
+  for(let i = 0; i < dirtyModels.length; i+=1) {
     const model = dirtyModels[i]
     const knex = model.knex()
-    const host = knex.client.config.connection.host
+    const { host } = knex.client.config.connection
     if(host === 'psql') {
+      /* eslint-disable-next-line no-await-in-loop */
       await knex.raw(`TRUNCATE ${model.tableName} CASCADE;`)
     }
     else if(host === 'mysql') {
+      /* eslint-disable-next-line no-await-in-loop */
       await knex.raw('SET FOREIGN_KEY_CHECKS = 0;');
+      /* eslint-disable-next-line no-await-in-loop */
       await knex.raw(`TRUNCATE ${model.tableName};`);
+      /* eslint-disable-next-line no-await-in-loop */
       await knex.raw('SET FOREIGN_KEY_CHECKS = 1;');
     }
     else {
@@ -39,7 +43,30 @@ function getKey(obj, key) {
   return obj[key] !== undefined? key: toCamelCase(key)
 }
 
-async function create (model, overrides = {}, {followRelations = true, quantity = 1} = {}) {
+async function linkManyToManyRelations(instance, manyToManyRelations, model) {
+  for(let i = 0; i < manyToManyRelations.length; i+=1 ) {
+    const [ field, through, relatedInstances, toField, fromField ] = manyToManyRelations[i]
+
+    const [throughTable, throughFrom] = through.from.split('.')
+    const throughTo = through.to.split('.')[1]
+
+    for(let index = 0; index < relatedInstances.length; index+=1) {
+      const fromValue = instance[getKey(instance, fromField)]
+      const toValue = relatedInstances[index][getKey(relatedInstances[index], toField)]
+      /* eslint-disable-next-line no-await-in-loop */
+      await model.knex()
+        .raw(`
+          INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
+          VALUES (${fromValue}, ${toValue});
+        `);
+    }
+
+    instance[field] = relatedInstances
+  }
+  return instance
+}
+
+async function create (model, overrides = {}, {followRelations = true} = {}) {
   if(model && !model.jsonSchema) {
     throw new Error(`Please add 'jsonSchema' to the model '${model.name}'.`)
   }
@@ -51,7 +78,9 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
   const manyToManyRelations = []
 
   if(followRelations && relations) {
-    for (let field in relations) {
+    const fields = Object.keys(relations)
+    for (let a=0;a<fields.length;a+=1) {
+      const field = fields[a]
       const {
         relation,
         modelClass,
@@ -68,6 +97,7 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
         else {
           const fromFieldValue = overrides[getKey(model.jsonSchema.properties, fromField)]
           if(!fromFieldValue) {
+            /* eslint-disable-next-line no-await-in-loop */
             const row = await create(modelClass)
             relationMappings[field] = row
             relationMappings[getKey(model.jsonSchema.properties, fromField)] = row[getKey(row, toField)]
@@ -75,7 +105,8 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
         }
       }
       else if(relation.name === ManyToManyRelation.name) {
-        let relatedInstances = overrides[field]
+        const relatedInstances = overrides[field]
+        /* eslint-disable-next-line no-continue */
         if(!relatedInstances) continue
 
         if(relatedInstances && !Array.isArray(relatedInstances) || relatedInstances.length === 0) {
@@ -95,29 +126,7 @@ async function create (model, overrides = {}, {followRelations = true, quantity 
     ...relationMappings
   }
   const instance = await model.query().insertAndFetch(toInsert)
-  return await linkManyToManyRelations(instance, manyToManyRelations, model)
-}
-
-async function linkManyToManyRelations(instance, manyToManyRelations, model) {
-  for(let i = 0; i < manyToManyRelations.length; i ++ ) {
-    const [ field, through, relatedInstances, toField, fromField ] = manyToManyRelations[i]
-
-    const [throughTable, throughFrom] = through.from.split('.')
-    const throughTo = through.to.split('.')[1]
-
-    for(let i = 0; i < relatedInstances.length; i++) {
-      const fromValue = instance[getKey(instance, fromField)]
-      const toValue = relatedInstances[i][getKey(relatedInstances[i], toField)]
-      await model.knex()
-        .raw(`
-          INSERT INTO ${throughTable} ( ${throughFrom}, ${throughTo} )
-          VALUES (${fromValue}, ${toValue});
-        `);
-    }
-
-    instance[field] = relatedInstances
-  }
-  return instance
+  return linkManyToManyRelations(instance, manyToManyRelations, model)
 }
 
 function prepare(model, overrides) {

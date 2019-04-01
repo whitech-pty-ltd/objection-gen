@@ -1,3 +1,4 @@
+/* eslint-disable */
 const { Model } = require('objection')
 const Knex = require('knex')
 const { create, clean } = require('./index')
