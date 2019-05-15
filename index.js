@@ -29,6 +29,8 @@ async function clean() {
       throw Error('Unhandled host')
     }
   }
+
+  dirtyModels.splice(0, dirtyModels.length)
 }
 
 function addDirtyModel(model) {
