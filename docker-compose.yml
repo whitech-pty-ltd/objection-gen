@@ -3,7 +3,7 @@ services:
   psql:
     image: postgres:9.6.2-alpine
   test:
-    image: node:9.9.0-alpine
+    image: node:12-alpine
     working_dir: /usr/app/
     volumes:
       - .:/usr/app/

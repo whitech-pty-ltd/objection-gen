@@ -66,11 +66,11 @@ async function linkManyToManyRelations(instance, manyToManyRelations, model) {
   return instance
 }
 
-async function create (model, overrides = {}, {followRelations = true} = {}) {
+async function create(model, overrides = {}, { followRelations = true } = {}) {
   if(model && !model.jsonSchema) {
     throw new Error(`Please add 'jsonSchema' to the model '${model.name}'.`)
   }
-
+  const { jsonSchema } = model
   const relations = model.relationMappings
   const relationMappings = {}
   addDirtyModel(model)
@@ -92,15 +92,15 @@ async function create (model, overrides = {}, {followRelations = true} = {}) {
 
       if(BelongsToOneRelation.name === relation.name) {
         if(overrides[field]) {
-          relationMappings[getKey(model.jsonSchema.properties, fromField)] = overrides[field][getKey(overrides[field], toField)]
+          relationMappings[getKey(jsonSchema.properties, fromField)] = overrides[field][getKey(overrides[field], toField)]
         }
         else {
-          const fromFieldValue = overrides[getKey(model.jsonSchema.properties, fromField)]
+          const fromFieldValue = overrides[getKey(jsonSchema.properties, fromField)]
           if(!fromFieldValue) {
             /* eslint-disable-next-line no-await-in-loop */
             const row = await create(modelClass)
             relationMappings[field] = row
-            relationMappings[getKey(model.jsonSchema.properties, fromField)] = row[getKey(row, toField)]
+            relationMappings[getKey(jsonSchema.properties, fromField)] = row[getKey(row, toField)]
           }
         }
       }
@@ -119,7 +119,7 @@ async function create (model, overrides = {}, {followRelations = true} = {}) {
     }
   }
 
-  const fakes = jsf.generate(model.jsonSchema)
+  const fakes = jsf.generate({ ...jsonSchema, additionalProperties: false })
   const toInsert = {
     ...fakes,
     ...overrides,
@@ -130,7 +130,8 @@ async function create (model, overrides = {}, {followRelations = true} = {}) {
 }
 
 function prepare(model, overrides) {
-  const fakes = jsf.generate(model.jsonSchema)
+  const { jsonSchema = {} } = model || {}
+  const fakes = jsf.generate({ ...jsonSchema, additionalProperties: false })
   return { ...fakes, ...overrides }
 }
 

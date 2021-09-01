@@ -135,7 +135,7 @@ class Role extends Model {
 
 class Noop extends Model {}
 
-describe('create', async () => {
+describe('create', () => {
   beforeEach(async () => {
     await clean()
   })
