@@ -1,6 +1,6 @@
 {
   "name": "objection-gen",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
