@@ -13,7 +13,7 @@
     "db-migrate": "^0.11.4",
     "db-migrate-pg": "^0.4.0",
     "jest": "^24.8.0",
-    "knex": "^0.19.5",
+    "knex": "^2.4.0",
     "pg": "^7.7.1"
   },
   "dependencies": {
